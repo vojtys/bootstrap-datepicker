@@ -32,7 +32,7 @@ class DatePickerInput extends DatePickerBase
 
         // add input and icon into group
         $group->add($el)->add(Utils\Html::el('span')->class('input-group-addon')
-            ->add(Utils\Html::el('span')->class('glyphicon glyphicon-calendar'))
+            ->add(Utils\Html::el('span')->class($this->getIco()))
         );
 
         return $group;
