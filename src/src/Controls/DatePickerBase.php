@@ -63,6 +63,7 @@ class DatePickerBase extends BaseControl
     /** @var mixed unfiltered submitted value */
     protected $rawValue = '';
 
+    protected $ico = 'fa fa-calendar';
 
     /**
      * @param null $label
@@ -471,4 +472,21 @@ class DatePickerBase extends BaseControl
         return (is_int($value) && (($value >= 0) && ($value <= 6)));
     }
 
+    /**
+     * @param $ico
+     * @return $this
+     */
+    public function setIco($ico)
+    {
+        $this->ico = $ico;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getIco()
+    {
+        return $this->ico;
+    }
 }
