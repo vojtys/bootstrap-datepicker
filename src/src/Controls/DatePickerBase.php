@@ -60,10 +60,17 @@ class DatePickerBase extends BaseControl
     /** @var  array */
     protected $datesDisabled = [];
 
-    /** @var mixed unfiltered submitted value */
+    /** @var  mixed unfiltered submitted value */
     protected $rawValue = '';
 
-    protected $ico = 'fa fa-calendar';
+    /** @var  boolean */
+    protected $time = TRUE;
+
+    /** @var string */
+    protected $ico = 'glyphicon glyphicon-calendar';
+
+    /** @var bool */
+    protected $inline = FALSE;
 
     /**
      * @param null $label
@@ -79,6 +86,275 @@ class DatePickerBase extends BaseControl
                 $this->setLanguage($value);
             }
         }
+    }
+
+    /**
+     * @param $value
+     * @return FALSE|Utils\DateTime|null
+     * @throws DatePickerException
+     */
+    public function prepareValue($value)
+    {
+        if ($value instanceof Utils\DateTime) {
+            //...
+        } elseif ($value instanceof \DateTime) {
+            $value = Utils\DateTime::createFromFormat($this->getDateTimeFormat(TRUE), $value->format($this->getDateTimeFormat(TRUE)));
+        } elseif (is_string($value) && ($value != '')) {
+            $value = Utils\DateTime::createFromFormat($this->getDateTimeFormat(TRUE), $value);
+        } elseif (empty($value)) {
+            $value = NULL;
+        }
+        if ($value === FALSE) {
+            throw new DatePickerException('Not valid string!');
+        }
+        if (($value instanceof Utils\DateTime) && ($this->time == FALSE)) {
+            $value->setTime(0, 0, 0);
+        }
+
+        return $value;
+    }
+
+    /**
+     * Converts javascript datetime format to php date format
+     *
+     * @param $str
+     * @return string
+     */
+    protected function toPhpDateTimeFormat($str)
+    {
+        $f = str_replace(
+            array('dd',	'd',	'mm',	'm',	'MM',	'M',	'yyyy',	'yyy',	'yy'),
+            array('d',	'j',	'm',	'n',	'F',	'M',	'Y',	'y',	'y'),
+            $str
+        );
+        return $f;
+    }
+
+    /**
+     * @param $value
+     * @return bool
+     */
+    public static function isInRange($value)
+    {
+        return (is_int($value) && (($value >= 0) && ($value <= 6)));
+    }
+
+    /**
+     * Get settings for control
+     *
+     * @return array
+     */
+    protected function getControlSettings()
+    {
+        $settings = [
+            'format' => $this->getDateTimeFormat(),
+            'daysOfWeekDisabled' => $this->daysOfWeekDisabled,
+            'autoClose' => $this->autoClose,
+            'startView' => $this->startView,
+            'minViewMode' => $this->minViewMode,
+            'todayHighlight' => $this->todayHighlight,
+            'inline' => $this->inline,
+        ];
+
+        if (!empty($this->datesDisabled)) {
+            $dates = [];
+            foreach ($this->datesDisabled as $dateTime) {
+                $dates[] = $dateTime->format($this->getDateTimeFormat(TRUE));
+            }
+            $settings['datesDisabled'] = $dates;
+        }
+
+        if ($this->startDateTime != NULL) {
+            $settings['startDate'] = $this->startDateTime->format($this->getDateTimeFormat(TRUE));
+        }
+
+        if ($this->endDateTime != NULL) {
+            $settings['endDate'] = $this->endDateTime->format($this->getDateTimeFormat(TRUE));
+        }
+
+        return $settings;
+    }
+
+
+    /**
+     * @param $validator
+     * @param null $message
+     * @param array|null $arg
+     *
+     * @return $this|BaseControl
+     *
+     * @throws DatePickerException
+     */
+    public function addRule($validator, $message = NULL, $arg = NULL)
+    {
+        // check for disabled dates
+        if ($validator == self::DISABLED_DATES) {
+            if (!is_array($arg)) {
+                throw new DatePickerException('Rule argument is not valid! Array of \DateTime objects is expected. '. get_class($arg) . ' given.');
+            }
+            foreach ($arg as $date) {
+                if ($date instanceof \DateTime) {
+                    // add only instances of DateTime
+                    $this->setDisabledDate($date);
+                }
+            }
+            parent::addRule($validator, $message, $this->datesDisabled);
+        }
+
+        // check for disabled days in week
+        elseif ($validator == self::DISABLED_DAYS) {
+            if (is_array($arg)) {
+
+                // filter array values
+                $arg = array_filter($arg, 'Vojtys\Forms\DatePicker\DatePickerBase::isInRange');
+                $this->setDaysOfWeekDisabled($arg);
+                parent::addRule($validator, $message, $arg);
+            } else {
+                throw new DatePickerException('Rule argument is not valid! Array is expected ' . get_class($arg) . ' given.');
+            }
+        }
+
+        // check for minimal datetime value
+        elseif ($validator == self::DATE_TIME_MIN) {
+            if ($arg instanceof \DateTime) {
+                $this->setStartDate($arg); // set datepicker option
+                parent::addRule($validator, $message, $arg);
+            } else {
+                throw new DatePickerException('Rule argument is not valid! \DateTime object is expected. '. get_class($arg) . ' given.');
+            }
+        }
+
+        // check for maximal datetime value
+        elseif ($validator == self::DATE_TIME_MAX) {
+            if ($arg instanceof \DateTime) {
+                $this->setEndDate($arg); // set datepicker option
+                parent::addRule($validator, $message, $arg);
+            } else {
+                throw new DatePickerException('Rule argument is not valid! \DateTime object is expected. '. get_class($arg) . ' given.');
+            }
+        }
+
+        // default
+        else {
+            parent::addRule($validator, $message, $arg);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param Nette\Forms\IControl $control
+     * @param $dates
+     *
+     * @return bool
+     *
+     * @throws DatePickerException
+     */
+    public static function validateDisabledDates(Nette\Forms\IControl $control, $dates)
+    {
+        if (!$control instanceof self) {
+            throw new DatePickerException('Unable to validate ' . get_class($control) . ' instance.');
+        }
+
+        // get control value(s)
+        $values = clone $control->getValue();
+
+        // value is needed to be an array
+        $values = (!is_array($values)) ? [$values] : $values;
+
+        // find disabled dates
+        foreach ($values as $value) {
+            foreach ($dates as $date) {
+                if ($value != NULL) {
+
+                    @$value->modify('midnight'); //  >PHP 5.3.6
+                    if ($value == $date) {
+                        return FALSE;
+                    }
+                }
+            }
+        }
+
+        return TRUE;
+    }
+
+    /**
+     * @param Nette\Forms\IControl $control
+     * @param $dates
+     *
+     * @return bool
+     *
+     * @throws DatePickerException
+     */
+    public static function validateDisabledDays(Nette\Forms\IControl $control, $dates)
+    {
+        if (!$control instanceof self) {
+            throw new DatePickerException('Unable to validate ' . get_class($control) . ' instance.');
+        }
+
+        // get control value(s)
+        $values = $control->getValue();
+
+        // value is needed to be an array
+        $values = (!is_array($values)) ? [$values] : $values;
+
+        // array of disabled days
+        $settings = $control->getControlSettings();
+        $disabled = isset($settings['daysOfWeekDisabled']) ? $settings['daysOfWeekDisabled'] : array();
+
+        foreach ($values as $value) {
+            if (($value !== NULL) && ($value instanceof Utils\Datetime)) {
+                if (in_array($value->format('w'), $disabled)) {
+                    return FALSE;
+                }
+            }
+        }
+
+        return TRUE;
+    }
+
+    /**
+     * @param Nette\Forms\IControl $control
+     * @param \DateTime $minDate
+     *
+     * @return bool
+     *
+     * @throws DatePickerException
+     */
+    public static function validateDateTimeMin(Nette\Forms\IControl $control, \DateTime $minDate = NULL)
+    {
+        if (!$control instanceof self) {
+            throw new DatePickerException('Unable to validate ' . get_class($control) . ' instance.');
+        }
+
+        $value = $control->getValue();
+        if (is_array($value)) {
+            $value = (isset($value[ self::FIELD_NAME_START ])) ? $value[ self::FIELD_NAME_START ] : NULL;
+        }
+
+        return ($minDate === NULL || $value >= $minDate || $value === NULL);
+    }
+
+    /**
+     * @param Nette\Forms\IControl $control
+     * @param \DateTime $maxDate
+     *
+     * @return bool
+     *
+     * @throws DatePickerException
+     */
+    public static function validateDateTimeMax(Nette\Forms\IControl $control, \DateTime $maxDate = NULL)
+    {
+        if (!$control instanceof self) {
+            throw new DatePickerException('Unable to validate ' . get_class($control) . ' instance.');
+        }
+
+        $value = $control->getValue();
+        if (is_array($value)) {
+            $value = (isset($value[ self::FIELD_NAME_END ])) ? $value[ self::FIELD_NAME_END] : NULL;
+        }
+
+        return ($maxDate === NULL || $value <= $maxDate || $value === NULL);
     }
 
     /**
@@ -199,280 +475,6 @@ class DatePickerBase extends BaseControl
     }
 
     /**
-     * Get settings for control
-     *
-     * @return array
-     */
-    protected function getControlSettings()
-    {
-        $settings = [
-            'format' => $this->getDateTimeFormat(),
-            'daysOfWeekDisabled' => $this->daysOfWeekDisabled,
-            'autoClose' => $this->autoClose,
-            'startView' => $this->startView,
-            'minViewMode' => $this->minViewMode,
-            'todayHighlight' => $this->todayHighlight,
-        ];
-
-        if (!empty($this->datesDisabled)) {
-            $dates = [];
-            foreach ($this->datesDisabled as $dateTime) {
-                $dates[] = $dateTime->format($this->getDateTimeFormat(TRUE));
-            }
-            $settings['datesDisabled'] = $dates;
-        }
-
-        if ($this->startDateTime != NULL) {
-            $settings['startDate'] = $this->startDateTime->format($this->getDateTimeFormat(TRUE));
-        }
-
-        if ($this->endDateTime != NULL) {
-            $settings['endDate'] = $this->endDateTime->format($this->getDateTimeFormat(TRUE));
-        }
-
-        return $settings;
-    }
-
-
-    /**
-     * @param $validator
-     * @param null $message
-     * @param array|null $arg
-     *
-     * @return $this|BaseControl
-     *
-     * @throws DatePickerException
-     */
-    public function addRule($validator, $message = NULL, $arg = NULL)
-    {
-        // check for disabled dates
-        if ($validator == self::DISABLED_DATES) {
-            if (!is_array($arg)) {
-                throw new DatePickerException('Rule argument is not valid! Array of \DateTime objects is expected. '. get_class($arg) . ' given.');
-            }
-            foreach ($arg as $date) {
-                if ($date instanceof \DateTime) {
-                    // add only instances of DateTime
-                    $this->setDisabledDate($date);
-                }
-            }
-            parent::addRule($validator, $message, $this->datesDisabled);
-        }
-
-        // check for disabled days in week
-        elseif ($validator == self::DISABLED_DAYS) {
-            if (is_array($arg)) {
-
-                // filter array values
-                $arg = array_filter($arg, 'Vojtys\Forms\DatePicker\DatePickerBase::isInRange');
-                $this->setDaysOfWeekDisabled($arg);
-                parent::addRule($validator, $message, $arg);
-            } else {
-                throw new DatePickerException('Rule argument is not valid! Array is expected ' . get_class($arg) . ' given.');
-            }
-        }
-
-        // check for minimal datetime value
-        elseif ($validator == self::DATE_TIME_MIN) {
-            if ($arg instanceof \DateTime) {
-                $this->setStartDate($arg); // set datepicker option
-                parent::addRule($validator, $message, $arg);
-            } else {
-                throw new DatePickerException('Rule argument is not valid! \DateTime object is expected. '. get_class($arg) . ' given.');
-            }
-        }
-
-        // check for maximal datetime value
-        elseif ($validator == self::DATE_TIME_MAX) {
-            if ($arg instanceof \DateTime) {
-                $this->setEndDate($arg); // set datepicker option
-                parent::addRule($validator, $message, $arg);
-            } else {
-                throw new DatePickerException('Rule argument is not valid! \DateTime object is expected. '. get_class($arg) . ' given.');
-            }
-        }
-
-        // default
-        else {
-            parent::addRule($validator, $message, $arg);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @param Nette\Forms\IControl $control
-     * @param $dates
-     *
-     * @return bool
-     *
-     * @throws DatePickerException
-     */
-    public static function validateDisabledDates(Nette\Forms\IControl $control, $dates)
-    {
-        if (!$control instanceof self) {
-            throw new DatePickerException('Unable to validate ' . get_class($control) . ' instance.');
-        }
-
-        // get control value(s)
-        $values = $control->getValue();
-
-        // value is needed to be an array
-        $values = (!is_array($values)) ? [$values] : $values;
-
-        // find disabled dates
-        foreach ($values as $value) {
-            foreach ($dates as $date) {
-                if ($value != NULL) {
-
-                    @$value->modify('midnight'); //  >PHP 5.3.6
-                    if ($value == $date) {
-                        return FALSE;
-                    }
-                }
-            }
-        }
-
-        return TRUE;
-    }
-
-    /**
-     * @param Nette\Forms\IControl $control
-     * @param $dates
-     *
-     * @return bool
-     *
-     * @throws DatePickerException
-     */
-    public static function validateDisabledDays(Nette\Forms\IControl $control, $dates)
-    {
-        if (!$control instanceof self) {
-            throw new DatePickerException('Unable to validate ' . get_class($control) . ' instance.');
-        }
-
-        // get control value(s)
-        $values = $control->getValue();
-
-        // value is needed to be an array
-        $values = (!is_array($values)) ? [$values] : $values;
-
-        // array of disabled days
-        $settings = $control->getControlSettings();
-        $disabled = isset($settings['daysOfWeekDisabled']) ? $settings['daysOfWeekDisabled'] : array();
-
-        foreach ($values as $value) {
-            if (($value !== NULL) && ($value instanceof Utils\Datetime)) {
-                if (in_array($value->format('w'), $disabled)) {
-                    return FALSE;
-                }
-            }
-        }
-
-        return TRUE;
-    }
-
-    /**
-     * @param Nette\Forms\IControl $control
-     * @param \DateTime $minDate
-     *
-     * @return bool
-     *
-     * @throws DatePickerException
-     */
-    public static function validateDateTimeMin(Nette\Forms\IControl $control, \DateTime $minDate = NULL)
-    {
-        if (!$control instanceof self) {
-            throw new DatePickerException('Unable to validate ' . get_class($control) . ' instance.');
-        }
-
-        $value = $control->getValue();
-        if (is_array($value)) {
-           $value = (isset($value[ self::FIELD_NAME_START ])) ? $value[ self::FIELD_NAME_START ] : NULL;
-        }
-
-        return ($minDate === NULL || $value >= $minDate || $value === NULL);
-    }
-
-    /**
-     * @param Nette\Forms\IControl $control
-     * @param \DateTime $maxDate
-     *
-     * @return bool
-     *
-     * @throws DatePickerException
-     */
-    public static function validateDateTimeMax(Nette\Forms\IControl $control, \DateTime $maxDate = NULL)
-    {
-        if (!$control instanceof self) {
-            throw new DatePickerException('Unable to validate ' . get_class($control) . ' instance.');
-        }
-
-        $value = $control->getValue();
-        if (is_array($value)) {
-            $value = (isset($value[ self::FIELD_NAME_END ])) ? $value[ self::FIELD_NAME_END] : NULL;
-        }
-
-        return ($maxDate === NULL || $value <= $maxDate || $value === NULL);
-    }
-
-    /**
-     * @param $value
-     * @return FALSE|Utils\DateTime|null
-     *
-     * @throws DatePickerException
-     */
-    public function prepareValue($value)
-    {
-        if ($value instanceof Utils\DateTime) {
-            //...
-
-            // converts \DateTime value into Utils\Datetime
-        } elseif ($value instanceof \DateTime) {
-            $value = Utils\DateTime::createFromFormat($this->getDateTimeFormat(TRUE), $value->format($this->getDateTimeFormat(TRUE)));
-
-            // converts string into Utils\Datetime
-        } elseif (is_string($value)) {
-            $value = Utils\DateTime::createFromFormat($this->getDateTimeFormat(TRUE), $value);
-
-            // value is not valid string
-            if ($value === FALSE) {
-                throw new DatePickerException();
-            }
-
-            // empty value
-        } elseif (empty($value)) {
-            $value = NULL;
-        }
-
-        return $value;
-    }
-
-    /**
-     * Converts javascript datetime format to php date format
-     *
-     * @param $str
-     * @return string
-     */
-    protected function toPhpDateTimeFormat($str)
-    {
-        $f = str_replace(
-            array('dd',	'd',	'mm',	'm',	'MM',	'M',	'yyyy',	'yyy',	'yy'),
-            array('d',	'j',	'm',	'n',	'F',	'M',	'Y',	'y',	'y'),
-            $str
-        );
-        return $f;
-    }
-
-    /**
-     * @param $value
-     * @return bool
-     */
-    public static function isInRange($value)
-    {
-        return (is_int($value) && (($value >= 0) && ($value <= 6)));
-    }
-
-    /**
      * @param $ico
      * @return $this
      */
@@ -488,5 +490,14 @@ class DatePickerBase extends BaseControl
     public function getIco()
     {
         return $this->ico;
+    }
+
+    /**
+     * @return $this
+     */
+    public function disableTime()
+    {
+        $this->time = FALSE;
+        return $this;
     }
 }

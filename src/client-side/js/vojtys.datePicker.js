@@ -9,20 +9,15 @@
     /* jshint laxbreak: true, expr: true */
     "use strict";
 
-
     // init objects
     var Vojtys = window.Vojtys || {};
     Vojtys.Forms = Vojtys.Forms || {};
 
-
     $.fn.vojtysFormsDatepicker = function () {
-
         return this.each(function() {
             var $this = $(this);
-
             // merge settings with defaults
             var settings = $.extend({}, $.fn.vojtysFormsDatepicker.defaults, $this.data('settings'));
-
             // init datepicker object
             if (!$this.data('vojtys-forms-datepicker')) {
                 $this.data('vojtys-forms-datepicker', (new Vojtys.Forms.Datepicker($this, settings)));
@@ -31,10 +26,18 @@
     };
 
     Vojtys.Forms.Datepicker = function($element, options) {
-
+        if (options.inline) {
+            $element = $element.find('div');
+        }
         // init eternicode/bootstrap-datepicker
-        $element.datepicker(options);
-    }
+        var dp = $element.datepicker(options);
+        if (options.inline) {
+            $element.on("changeDate", function(event) {
+                $element.prev().val($element.datepicker('getFormattedDate'));
+            });
+            $element.datepicker('update', $element.prev().val());
+        }
+    };
 
     /**
      * Autoloading date picker plugin

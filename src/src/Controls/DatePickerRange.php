@@ -113,15 +113,14 @@ class DatePickerRange extends DatePickerBase
         }
 
         $this->value = empty($values) ? NULL : $values;
-
         return $this;
     }
 
     public function loadHttpData()
     {
         $this->setValue([
-            self::FIELD_NAME_START => Utils\DateTime::createFromFormat($this->getDateTimeFormat(TRUE), $this->getHttpData(Form::DATA_LINE, '[start]')),
-            self::FIELD_NAME_END => Utils\DateTime::createFromFormat($this->getDateTimeFormat(TRUE), $this->getHttpData(Form::DATA_LINE, '[end]')),
+            self::FIELD_NAME_START => $this->getHttpData(Form::DATA_LINE, '[start]'),
+            self::FIELD_NAME_END => $this->getHttpData(Form::DATA_LINE, '[end]'),
         ]);
     }
 

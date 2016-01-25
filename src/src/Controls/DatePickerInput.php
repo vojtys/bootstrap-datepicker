@@ -4,7 +4,6 @@ namespace Vojtys\Forms\DatePicker;
 use Nette\Utils;
 use Nette\Forms\Form;
 
-
 /**
  * Class DatePickerInput
  * @package Vojtys\Forms\DatePicker
@@ -22,18 +21,23 @@ class DatePickerInput extends DatePickerBase
         $el->value = $this->value ? $this->value->format($this->toPhpDateTimeFormat($this->dateTimeFormat)) : NULL;
 
         // generate field group
-        $group = Utils\Html::el('div');
+        $group = Utils\Html::el('div')->add($el);
+
+        if ($this->inline) {
+            $el->addAttributes(array('style' => 'display:none;'));
+            $group->add(Utils\Html::el('div'));
+        } else {
+            $group->add(Utils\Html::el('span')->class('input-group-addon')
+                ->add(Utils\Html::el('span')->class($this->getIco()))
+            );
+        }
+
         $group->addAttributes([
             'data-vojtys-forms-datepicker' => '',
             'class' => 'input-group date',
             'data-locale' => $this->getLanguage(),
             'data-settings' => $this->getControlSettings()
         ]);
-
-        // add input and icon into group
-        $group->add($el)->add(Utils\Html::el('span')->class('input-group-addon')
-            ->add(Utils\Html::el('span')->class($this->getIco()))
-        );
 
         return $group;
     }
@@ -71,6 +75,15 @@ class DatePickerInput extends DatePickerBase
 
     public function loadHttpData()
     {
-        $this->setValue(Utils\DateTime::createFromFormat($this->getDateTimeFormat(TRUE), $this->getHttpData(Form::DATA_LINE)));
+        $this->setValue($this->getHttpData(Form::DATA_LINE));
+    }
+
+    /**
+     * @return $this
+     */
+    public function setInlineTypeOn()
+    {
+        $this->inline = TRUE;
+        return $this;
     }
 }
