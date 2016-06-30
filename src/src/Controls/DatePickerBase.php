@@ -149,7 +149,7 @@ class DatePickerBase extends BaseControl
         $settings = [
             'format' => $this->getDateTimeFormat(),
             'daysOfWeekDisabled' => $this->daysOfWeekDisabled,
-            'autoClose' => $this->autoClose,
+            'autoclose' => $this->autoClose,
             'startView' => $this->startView,
             'minViewMode' => $this->minViewMode,
             'todayHighlight' => $this->todayHighlight,
