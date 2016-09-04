@@ -18,10 +18,13 @@ class DatePickerInput extends DatePickerBase
         $el->addAttributes(array('class' => 'form-control'));
 
         // converts datetime value into php format
+        // $TODO
         if ($this->multidate && is_array($this->value)) {
             $pom = [];
             foreach ($this->value as $v) {
-                array_push($pom, $v->format($this->toPhpDateTimeFormat($this->dateTimeFormat)));
+                if ($v !== NULL) {
+                    array_push($pom, $v->format($this->toPhpDateTimeFormat($this->dateTimeFormat)));
+                }
             }
             $value = implode($this->multidateSeparator, $pom);
         } else {
