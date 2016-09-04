@@ -16,6 +16,7 @@ class DatePickerBase extends BaseControl
 
     const FIELD_NAME_START = 'start';
     const FIELD_NAME_END = 'end';
+    const DEFAULT_SEPARATOR = ',';
 
     const DATE_TIME_MIN = 'Vojtys\Forms\Datepicker\DatepickerBase::validateDateTimeMin';
     const DATE_TIME_MAX = 'Vojtys\Forms\Datepicker\DatepickerBase::validateDateTimeMax';
@@ -72,6 +73,12 @@ class DatePickerBase extends BaseControl
     /** @var bool */
     protected $inline = FALSE;
 
+    /** @var bool */
+    protected $multidate = FALSE;
+
+    /** @var string */
+    protected $multidateSeparator = self::DEFAULT_SEPARATOR;
+
     /**
      * @param null $label
      * @param $config
@@ -90,10 +97,30 @@ class DatePickerBase extends BaseControl
 
     /**
      * @param $value
-     * @return FALSE|Utils\DateTime|null
+     * @return array|FALSE|Utils\DateTime|null
      * @throws DatePickerException
      */
     public function prepareValue($value)
+    {
+        if ($this->multidate) {
+            $values = explode($this->multidateSeparator, $value);
+            $value = [];
+            foreach ($values as $item) {
+                $value[] = $this->_prepareValue($item);
+            }
+        } else {
+            $value = $this->_prepareValue($value);
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param $value
+     * @return FALSE|Utils\DateTime|null
+     * @throws DatePickerException
+     */
+    private function _prepareValue($value)
     {
         if ($value instanceof Utils\DateTime) {
             //...
@@ -154,6 +181,8 @@ class DatePickerBase extends BaseControl
             'minViewMode' => $this->minViewMode,
             'todayHighlight' => $this->todayHighlight,
             'inline' => $this->inline,
+            'multidate' => $this->multidate,
+            'multidateSeparator' => $this->multidateSeparator
         ];
 
         if (!empty($this->datesDisabled)) {
@@ -498,6 +527,20 @@ class DatePickerBase extends BaseControl
     public function disableTime()
     {
         $this->time = FALSE;
+        return $this;
+    }
+
+    /**
+     * @param string $separator
+     * @return $this
+     */
+    public function allowMultidate($separator = self::DEFAULT_SEPARATOR)
+    {
+        if ($this instanceof DatePickerRange) {
+            throw new DatePickerException('Multidate is not allowed for "datePickerRange".');
+        }
+        $this->multidate = TRUE;
+        $this->multidateSeparator = $separator;
         return $this;
     }
 }

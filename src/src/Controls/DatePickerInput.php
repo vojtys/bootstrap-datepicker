@@ -18,7 +18,16 @@ class DatePickerInput extends DatePickerBase
         $el->addAttributes(array('class' => 'form-control'));
 
         // converts datetime value into php format
-        $el->value = $this->value ? $this->value->format($this->toPhpDateTimeFormat($this->dateTimeFormat)) : NULL;
+        if ($this->multidate && is_array($this->value)) {
+            $pom = [];
+            foreach ($this->value as $v) {
+                array_push($pom, $v->format($this->toPhpDateTimeFormat($this->dateTimeFormat)));
+            }
+            $value = implode($this->multidateSeparator, $pom);
+        } else {
+            $value = $this->value ? $this->value->format($this->toPhpDateTimeFormat($this->dateTimeFormat)) : NULL;
+        }
+        $el->value = $value;
 
         // generate field group
         $group = Utils\Html::el('div')->add($el);
@@ -61,6 +70,8 @@ class DatePickerInput extends DatePickerBase
     {
         $value = parent::getValue();
         if ($value instanceof Utils\DateTime) {
+            return $value;
+        } elseif (is_array($value)) {
             return $value;
         } else if ($value === FALSE || $value === NULL) {
             return NULL;
