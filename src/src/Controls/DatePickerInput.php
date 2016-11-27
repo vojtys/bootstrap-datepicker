@@ -33,14 +33,14 @@ class DatePickerInput extends DatePickerBase
         $el->value = $value;
 
         // generate field group
-        $group = Utils\Html::el('div')->add($el);
+        $group = Utils\Html::el('div')->addHtml($el);
 
         if ($this->inline) {
             $el->addAttributes(array('style' => 'display:none;'));
-            $group->add(Utils\Html::el('div'));
+            $group->addHtml(Utils\Html::el('div'));
         } else {
-            $group->add(Utils\Html::el('span')->class('input-group-addon')
-                ->add(Utils\Html::el('span')->class($this->getIco()))
+            $group->addHtml(Utils\Html::el('span')->class('input-group-addon')
+                ->addHtml(Utils\Html::el('span')->class($this->getIco()))
             );
         }
 

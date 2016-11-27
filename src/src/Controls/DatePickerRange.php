@@ -47,9 +47,9 @@ class DatePickerRange extends DatePickerBase
         ]);
 
         // add field and icon
-        $group->add($elStart);
-        $group->add($groupAdd);
-        $group->add($elEnd);
+        $group->addHtml($elStart);
+        $group->addHtml($groupAdd);
+        $group->addHtml($elEnd);
 
         return $group;
     }
