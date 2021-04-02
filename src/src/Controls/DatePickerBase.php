@@ -31,13 +31,13 @@ class DatePickerBase extends BaseControl
     const MIN_VIEW_MODE_MONTHS = 1;
     const MIN_VIEW_MODE_YEARS = 2;
 
-    /** @var  string */
+    /** @var string */
     protected $language;
 
-    /** @var  Utils\DateTime */
+    /** @var Utils\DateTime */
     protected $startDateTime;
 
-    /** @var  Utils\DateTime */
+    /** @var Utils\DateTime */
     protected $endDateTime;
 
     /** @var int */
@@ -50,31 +50,31 @@ class DatePickerBase extends BaseControl
     protected $dateTimeFormat = self::VOJTY_DATE_FORMAT;
 
     /** @var bool */
-    protected $autoClose = FALSE;
+    protected $autoClose = false;
 
     /** @var bool */
-    protected $todayHighlight = FALSE;
+    protected $todayHighlight = false;
 
-    /** @var  array */
+    /** @var array */
     protected $daysOfWeekDisabled = [];
 
-    /** @var  array */
+    /** @var array */
     protected $datesDisabled = [];
 
-    /** @var  mixed unfiltered submitted value */
+    /** @var mixed unfiltered submitted value */
     protected $rawValue = '';
 
-    /** @var  boolean */
-    protected $time = TRUE;
+    /** @var boolean */
+    protected $time = true;
 
     /** @var string */
     protected $ico = 'glyphicon glyphicon-calendar';
 
     /** @var bool */
-    protected $inline = FALSE;
+    protected $inline = false;
 
     /** @var bool */
-    protected $multidate = FALSE;
+    protected $multidate = false;
 
     /** @var string */
     protected $multidateSeparator = self::DEFAULT_SEPARATOR;
@@ -444,29 +444,6 @@ class DatePickerBase extends BaseControl
     }
 
     /**
-     * @param $lang
-     * @return $this
-     * @throws DatePickerException
-     */
-    protected function setLanguage($lang)
-    {
-        if (strlen($lang) > 2) {
-            throw new DatePickerException('Invalid input value!');
-        }
-
-        $this->language = $lang;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    protected function getLanguage()
-    {
-        return $this->language;
-    }
-
-    /**
      * @param \DateTime $dateTime
      */
     protected function setStartDate(\DateTime $dateTime)
@@ -543,4 +520,24 @@ class DatePickerBase extends BaseControl
         $this->multidateSeparator = $separator;
         return $this;
     }
+
+	/**
+	 * @param $lang
+	 * @return $this
+	 * @throws DatePickerException
+	 */
+	public function setLanguage($lang)
+	{
+		$this->language = $lang;
+
+		return $this;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function getLanguage()
+	{
+		return $this->language;
+	}
 }
