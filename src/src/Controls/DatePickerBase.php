@@ -2,7 +2,9 @@
 namespace Vojtys\Forms\DatePicker;
 
 use Nette;
+use Nette\ComponentModel\IComponent;
 use Nette\Forms\Controls\BaseControl;
+use Nette\Forms\Form;
 use Nette\Utils;
 
 /**
@@ -87,11 +89,21 @@ class DatePickerBase extends BaseControl
     {
         parent::__construct($label, $config);
         $this->control->type = 'text';
+    }
 
-        foreach($config as $key => $value) {
-            if ($key == 'language') {
-                $this->setLanguage($value);
-            }
+    /**
+     * @param IComponent
+     * @return void
+     */
+    protected function attached($form)
+    {
+        parent::attached($form);
+
+        if (($form instanceof Form) && ($form->getTranslator())) {
+            $locale = $form->getTranslator()->getLocale();
+            $this->setLanguage($locale);
+        } else {
+            $this->setLanguage('cs');
         }
     }
 
@@ -520,24 +532,4 @@ class DatePickerBase extends BaseControl
         $this->multidateSeparator = $separator;
         return $this;
     }
-
-	/**
-	 * @param $lang
-	 * @return $this
-	 * @throws DatePickerException
-	 */
-	public function setLanguage($lang)
-	{
-		$this->language = $lang;
-
-		return $this;
-	}
-
-	/**
-	 * @return mixed
-	 */
-	public function getLanguage()
-	{
-		return $this->language;
-	}
 }
