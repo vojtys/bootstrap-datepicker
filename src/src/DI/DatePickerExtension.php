@@ -15,9 +15,7 @@ class DatePickerExtension extends CompilerExtension
     /**
      * @var array
      */
-    protected $defaults = [
-        'language'    => 'cs',
-    ];
+    protected $defaults = [];
 
     /**
      * Adjusts DI container compiled to PHP class. Intended to be overridden by descendant.

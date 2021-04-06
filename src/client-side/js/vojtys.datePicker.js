@@ -17,7 +17,8 @@
         return this.each(function() {
             var $this = $(this);
             // merge settings with defaults
-            var defaults = $.extend({}, $.fn.vojtysFormsDatepicker.defaults, {language: $this.data('locale')});
+            var locale = $this.data('locale').replace('_', '-');
+            var defaults = $.extend({}, $.fn.vojtysFormsDatepicker.defaults, {language: locale});
             var settings = $.extend({}, defaults, $this.data('settings'));
             // init datepicker object
             if (!$this.data('vojtys-forms-datepicker')) {
