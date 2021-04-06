@@ -162,8 +162,8 @@ class DatePickerBase extends BaseControl
     protected function toPhpDateTimeFormat($str)
     {
         $f = str_replace(
-            array('dd',	'd',	'mm',	'm',	'MM',	'M',	'yyyy',	'yyy',	'yy'),
-            array('d',	'j',	'm',	'n',	'F',	'M',	'Y',	'y',	'y'),
+            array('dd',   'd',    'mm',   'm',    'MM',   'M',    'yyyy', 'yyy',  'yy'),
+            array('d',    'j',    'm',    'n',    'F',    'M',    'Y',    'y',    'y'),
             $str
         );
         return $f;
@@ -532,4 +532,20 @@ class DatePickerBase extends BaseControl
         $this->multidateSeparator = $separator;
         return $this;
     }
+
+    /**
+     * @param string|null $lang
+     */
+    public function setLanguage($lang = null)
+    {
+        $this->language = $lang;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getLanguage()
+    {
+        return $this->language;
+    }    
 }
