@@ -91,11 +91,7 @@ class DatePickerBase extends BaseControl
         $this->control->type = 'text';
     }
 
-    /**
-     * @param IComponent
-     * @return void
-     */
-    protected function attached($form)
+    protected function attached(IComponent $form): void
     {
         parent::attached($form);
 

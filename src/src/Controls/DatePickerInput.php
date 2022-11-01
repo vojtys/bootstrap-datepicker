@@ -87,7 +87,7 @@ class DatePickerInput extends DatePickerBase
         return $value;
     }
 
-    public function loadHttpData()
+    public function loadHttpData(): void
     {
         $this->setValue($this->getHttpData(Form::DATA_LINE));
     }
